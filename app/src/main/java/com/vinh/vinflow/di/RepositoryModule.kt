@@ -1,6 +1,8 @@
 package com.vinh.vinflow.di
 
+import com.vinh.vinflow.data.repository.CategoryRepositoryImpl
 import com.vinh.vinflow.data.repository.TransactionRepositoryImpl
+import com.vinh.vinflow.domain.repository.CategoryRepository
 import com.vinh.vinflow.domain.repository.TransactionRepository
 import dagger.Binds
 import dagger.Module
@@ -18,4 +20,10 @@ abstract class RepositoryModule {
     abstract fun bindTransactionRepository(
         implementation: TransactionRepositoryImpl
     ): TransactionRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindCategoryRepository(
+        implementation: CategoryRepositoryImpl
+    ): CategoryRepository
 }

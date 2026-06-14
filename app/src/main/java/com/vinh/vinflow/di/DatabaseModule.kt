@@ -2,6 +2,7 @@ package com.vinh.vinflow.di
 
 import android.content.Context
 import androidx.room.Room
+import com.vinh.vinflow.data.local.dao.CategoryDao
 import com.vinh.vinflow.data.local.dao.TransactionDao
 import com.vinh.vinflow.data.local.database.VinflowDatabase
 import dagger.Module
@@ -34,6 +35,11 @@ object DatabaseModule {
     @Provides
     fun provideTransactionDao(database: VinflowDatabase): TransactionDao {
         return database.transactionDao()
+    }
+
+    @Provides
+    fun provideCategoryDao(database: VinflowDatabase): CategoryDao {
+        return database.categoryDao()
     }
 
     private const val DATABASE_NAME = "vinflow.db"
