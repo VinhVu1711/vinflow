@@ -3,6 +3,8 @@ package com.vinh.vinflow.data.repository
 import com.vinh.vinflow.data.local.dao.TransactionDao
 import com.vinh.vinflow.data.mapper.toDomain
 import com.vinh.vinflow.data.mapper.toEntity
+import com.vinh.vinflow.domain.model.CategoryAmountSummary
+import com.vinh.vinflow.domain.model.MonthlyTransactionSummary
 import com.vinh.vinflow.domain.model.Transaction
 import com.vinh.vinflow.domain.model.TransactionFilter
 import com.vinh.vinflow.domain.model.TransactionType
@@ -46,6 +48,32 @@ class TransactionRepositoryImpl @Inject constructor(
             startDate = startDate,
             endDate = endDate
         )
+    }
+
+    override fun observeBalance(): Flow<Long> {
+        return transactionDao.observeBalance()
+    }
+
+    override fun observeAmountByCategory(
+        type: TransactionType,
+        startDate: Long,
+        endDate: Long
+    ): Flow<List<CategoryAmountSummary>> {
+        return transactionDao.observeAmountByCategory(
+            type = type,
+            startDate = startDate,
+            endDate = endDate
+        ).map { summaries -> summaries.map { it.toDomain() } }
+    }
+
+    override fun observeMonthlyTransactionSummary(
+        startDate: Long,
+        endDate: Long
+    ): Flow<List<MonthlyTransactionSummary>> {
+        return transactionDao.observeMonthlyTransactionSummary(
+            startDate = startDate,
+            endDate = endDate
+        ).map { summaries -> summaries.map { it.toDomain() } }
     }
 
     override suspend fun getTransactionById(id: Long): Transaction? {

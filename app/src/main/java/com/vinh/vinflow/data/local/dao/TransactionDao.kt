@@ -7,6 +7,8 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.vinh.vinflow.data.local.entity.TransactionEntity
+import com.vinh.vinflow.data.local.projection.CategoryAmountProjection
+import com.vinh.vinflow.data.local.projection.MonthlyTransactionSummaryProjection
 import com.vinh.vinflow.domain.model.TransactionType
 import kotlinx.coroutines.flow.Flow
 
@@ -14,6 +16,7 @@ import kotlinx.coroutines.flow.Flow
 //Đây là nơi khai báo các thao tác Database: query
 //Dao làm việc với entity chứ không làm viêc với domain
 //Lí do sử dụng interface ở đây là không cần custom logic bên trong hàm
+// Ý nghĩa từng hàm có thể check tại TransactionRepository
 @Dao
 interface TransactionDao {
     @Query("SELECT * FROM transactions ORDER BY date DESC, id DESC")
@@ -59,6 +62,60 @@ interface TransactionDao {
         startDate: Long,
         endDate: Long
     ): Flow<Long>
+
+    @Query(
+        """
+        SELECT COALESCE(
+            SUM(
+                CASE
+                    WHEN type = 'INCOME' THEN amount
+                    ELSE -amount
+                END
+            ),
+            0
+        ) FROM transactions
+        """
+    )
+    fun observeBalance(): Flow<Long>
+
+    @Query(
+        """
+        SELECT
+            categories.id AS categoryId,
+            categories.name AS categoryName,
+            categories.type AS type,
+            COALESCE(SUM(transactions.amount), 0) AS totalAmount
+        FROM transactions
+        INNER JOIN categories ON transactions.categoryId = categories.id
+        WHERE transactions.type = :type
+            AND transactions.date BETWEEN :startDate AND :endDate
+        GROUP BY categories.id, categories.name, categories.type
+        ORDER BY totalAmount DESC
+        """
+    )
+    fun observeAmountByCategory(
+        type: TransactionType,
+        startDate: Long,
+        endDate: Long
+    ): Flow<List<CategoryAmountProjection>>
+
+    @Query(
+        """
+        SELECT
+            strftime('%Y-%m', transactions.date / 1000, 'unixepoch') AS monthKey,
+            COALESCE(SUM(CASE WHEN transactions.type = 'INCOME' THEN transactions.amount ELSE 0 END), 0) AS totalIncome,
+            COALESCE(SUM(CASE WHEN transactions.type = 'EXPENSE' THEN transactions.amount ELSE 0 END), 0) AS totalExpense,
+            COALESCE(SUM(CASE WHEN transactions.type = 'INCOME' THEN transactions.amount ELSE -transactions.amount END), 0) AS balance
+        FROM transactions
+        WHERE transactions.date BETWEEN :startDate AND :endDate
+        GROUP BY monthKey
+        ORDER BY monthKey DESC
+        """
+    )
+    fun observeMonthlyTransactionSummary(
+        startDate: Long,
+        endDate: Long
+    ): Flow<List<MonthlyTransactionSummaryProjection>>
 
     @Query("SELECT * FROM transactions WHERE id = :id LIMIT 1")
     suspend fun getTransactionById(id: Long): TransactionEntity?

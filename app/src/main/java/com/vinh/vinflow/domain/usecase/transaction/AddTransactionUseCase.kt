@@ -13,6 +13,9 @@ class AddTransactionUseCase @Inject constructor(
             TransactionValidationResult.Valid -> {
                 val now = System.currentTimeMillis()
                 val savedId = repository.addTransaction(
+                    //Lý do chỉ copy để cập nhật id, create và update là do
+                    //transaction truyền vào đã có sẵn các dữ liệu người dùng nhập
+                    //use case chỉ cập nhật các thông tin tự quyết định khi thêm mới
                     transaction.copy(
                         id = 0,
                         createdAt = now,
