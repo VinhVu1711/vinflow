@@ -1,119 +1,155 @@
 package com.vinh.vinflow.feature.app
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.padding
+import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.vinh.vinflow.core.designsystem.component.ChromePlate
-import com.vinh.vinflow.core.designsystem.component.EmptyState
-import com.vinh.vinflow.core.designsystem.component.Y2kButton
-import com.vinh.vinflow.core.designsystem.theme.CarbonNavy
+import androidx.navigation.navArgument
+import com.vinh.vinflow.core.designsystem.component.VinflowScaffold
 import com.vinh.vinflow.core.navigation.VinflowDestination
+import com.vinh.vinflow.feature.backup.ImportPreviewScreen
+import com.vinh.vinflow.feature.category.CategoryManagementScreen
+import com.vinh.vinflow.feature.dashboard.DashboardScreen
+import com.vinh.vinflow.feature.settings.SettingsScreen
+import com.vinh.vinflow.feature.statistics.StatisticsScreen
+import com.vinh.vinflow.feature.transaction.TransactionFormScreen
+import com.vinh.vinflow.feature.transaction.TransactionsScreen
 
 @Composable
 fun VinflowApp() {
+    //Tạo controller để quản lý navigation
     val navController = rememberNavController()
+    //Biến route hiện tại thành Compose State. Route đổi -> UI recomposition
+    //để update title, bottom bar, ...
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
+    //Nếu màn hiện tại thuôc Bottom tab thì hiện bottom bar
+    //Nếu là màn phụ thì ẩn bar và hiện nút back
+    val selectedTabRoute = currentDestination.selectedBottomTabRoute()
+    val showBottomBar = selectedTabRoute != null
 
-    Scaffold(
-        bottomBar = {
-            NavigationBar {
-                VinflowDestination.bottomTabs.forEach { destination ->
-                    NavigationBarItem(
-                        selected = currentDestination?.hierarchy?.any { it.route == destination.route } == true,
-                        onClick = {
-                            navController.navigate(destination.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        icon = { Icon(destination.icon, contentDescription = destination.label) },
-                        label = { Text(destination.label) }
-                    )
+    VinflowScaffold(
+        title = currentDestination.screenTitle(),
+        showBack = !showBottomBar,
+        selectedTabRoute = selectedTabRoute,
+        showBottomBar = showBottomBar,
+        onBackClick = { navController.popBackStack() },
+        onTabSelected = { destination ->
+            navController.navigate(destination.route) {
+                //quay về root của graph, tránh stack tab bị phình
+                popUpTo(navController.graph.findStartDestination().id) {
+                    saveState = true
                 }
-            }
-        },
-        modifier = Modifier.background(CarbonNavy)
-    ) { innerPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = VinflowDestination.Dashboard.route,
-            modifier = Modifier.padding(innerPadding)
-        ) {
-            composable(VinflowDestination.Dashboard.route) {
-                PhaseOnePlaceholderScreen(
-                    title = "Vinflow Dashboard",
-                    message = "Foundation Compose/Hilt/navigation đã sẵn sàng. Dashboard dữ liệu thật sẽ được triển khai ở Phase 5."
-                )
-            }
-            composable(VinflowDestination.Transactions.route) {
-                PhaseOnePlaceholderScreen(
-                    title = "Transactions",
-                    message = "Transaction CRUD sẽ được triển khai ở Phase 4."
-                )
-            }
-            composable(VinflowDestination.Statistics.route) {
-                PhaseOnePlaceholderScreen(
-                    title = "Statistics",
-                    message = "Thống kê và chart sẽ được triển khai ở Phase 6."
-                )
-            }
-            composable(VinflowDestination.Settings.route) {
-                PhaseOnePlaceholderScreen(
-                    title = "Settings",
-                    message = "DataStore theme/currency sẽ được triển khai ở Phase 6."
-                )
+                //Bấm lại tab hiện tại thì không tạo thêm bản sao
+                launchSingleTop = true
+                //Khi quay lại tab thì khôi phục state
+                restoreState = true
             }
         }
+    ) { innerPadding ->
+        VinflowNavHost(
+            modifier = Modifier.padding(innerPadding),
+            navController = navController
+        )
     }
 }
 
 @Composable
-private fun PhaseOnePlaceholderScreen(
-    title: String,
-    message: String
+fun VinflowNavHost(
+    navController: androidx.navigation.NavHostController,
+    modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+    NavHost(
+        navController = navController,
+        startDestination = VinflowDestination.Dashboard.route,
+        modifier = modifier
     ) {
-        ChromePlate(modifier = Modifier.fillMaxWidth()) {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(text = title, style = MaterialTheme.typography.headlineSmall)
-                Text(text = "Offline-first expense tracker theo phong cách Nintendo 2001/Y2K.")
-            }
+        //Khi route là Dashboard thì render DashboardScreen
+        composable(VinflowDestination.Dashboard.route) {
+            DashboardScreen(
+                onAddTransactionClick = {
+                    navController.navigate(VinflowDestination.AddTransaction.route)
+                }
+            )
         }
-        EmptyState(
-            title = "Phase 1",
-            message = message,
-            modifier = Modifier.fillMaxWidth()
-        )
-        Y2kButton(text = "Placeholder CTA", onClick = {})
+        composable(VinflowDestination.Transactions.route) {
+            TransactionsScreen(
+                onAddTransactionClick = {
+                    navController.navigate(VinflowDestination.AddTransaction.route)
+                },
+                onEditTransactionClick = { transactionId ->
+                    navController.navigate(VinflowDestination.EditTransaction.createRoute(transactionId))
+                }
+            )
+        }
+        composable(VinflowDestination.Statistics.route) {
+            StatisticsScreen()
+        }
+        composable(VinflowDestination.Settings.route) {
+            SettingsScreen(
+                onCategoryManagementClick = {
+                    navController.navigate(VinflowDestination.CategoryManagement.route)
+                },
+                onImportPreviewClick = {
+                    navController.navigate(VinflowDestination.ImportPreview.route)
+                }
+            )
+        }
+        composable(VinflowDestination.AddTransaction.route) {
+            TransactionFormScreen(isEdit = false)
+        }
+        composable(
+            route = VinflowDestination.EditTransaction.route,
+            arguments = listOf(
+                navArgument(VinflowDestination.EditTransaction.ARG_TRANSACTION_ID) {
+                    type = NavType.LongType
+                }
+            )
+        ) { backStackEntry ->
+            val transactionId = backStackEntry.arguments
+                ?.getLong(VinflowDestination.EditTransaction.ARG_TRANSACTION_ID)
+            TransactionFormScreen(
+                isEdit = true,
+                transactionId = transactionId
+            )
+        }
+        composable(VinflowDestination.CategoryManagement.route) {
+            CategoryManagementScreen()
+        }
+        composable(VinflowDestination.ImportPreview.route) {
+            ImportPreviewScreen()
+        }
     }
 }
 
+// Kiểm tra màn hiện tại có thuộc bottom tab không
+// Nếu có trả về route tab đó nếu không trả về null
+private fun NavDestination?.selectedBottomTabRoute(): String? {
+    return VinflowDestination.bottomTabs
+        .firstOrNull { destination ->
+            this?.hierarchy?.any { it.route == destination.route } == true
+        }
+        ?.route
+}
+//map title dựa trên route hiện tại
+private fun NavDestination?.screenTitle(): String {
+    return when (this?.route) {
+        VinflowDestination.Dashboard.route -> VinflowDestination.Dashboard.label
+        VinflowDestination.Transactions.route -> VinflowDestination.Transactions.label
+        VinflowDestination.Statistics.route -> VinflowDestination.Statistics.label
+        VinflowDestination.Settings.route -> VinflowDestination.Settings.label
+        VinflowDestination.AddTransaction.route -> VinflowDestination.AddTransaction.label
+        VinflowDestination.EditTransaction.route -> VinflowDestination.EditTransaction.label
+        VinflowDestination.CategoryManagement.route -> VinflowDestination.CategoryManagement.label
+        VinflowDestination.ImportPreview.route -> VinflowDestination.ImportPreview.label
+        else -> "Vinflow"
+    }
+}

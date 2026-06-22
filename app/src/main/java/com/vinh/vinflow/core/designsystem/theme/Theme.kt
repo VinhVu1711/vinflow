@@ -8,31 +8,39 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 private val DarkScheme = darkColorScheme(
-    primary = SignalOrange,
+    primary = IncomeGreen,
     onPrimary = Color.White,
-    secondary = NavGold,
+    secondary = VietnamGold,
     onSecondary = Color.White,
-    background = CarbonNavy,
-    onBackground = Color.White,
-    surface = ChromeIndigo,
-    onSurface = Color.White,
-    surfaceVariant = PeriwinkleMetallic,
-    onSurfaceVariant = Color.White,
-    error = NintendoRed
+    tertiary = VietnamRed,
+    onTertiary = Color.White,
+    background = DarkBackground,
+    onBackground = DarkOnBackground,
+    surface = DarkSurface,
+    onSurface = DarkOnSurface,
+    surfaceVariant = DarkSurfaceVariant,
+    onSurfaceVariant = DarkOnSurfaceVariant,
+    outline = DarkOutline,
+    error = DarkError,
+    onError = Color.White
 )
 
 private val LightScheme = lightColorScheme(
-    primary = SignalOrange,
+    primary = Color(0xFF15803D),
     onPrimary = Color.White,
-    secondary = NavGold,
+    secondary = Color(0xFFB45309),
     onSecondary = Color.White,
-    background = PaleSky,
-    onBackground = PanelInk,
-    surface = LightPeriwinkle,
-    onSurface = PanelInk,
-    surfaceVariant = Lavender,
-    onSurfaceVariant = PanelInk,
-    error = NintendoRed
+    tertiary = VietnamRed,
+    onTertiary = Color.White,
+    background = LightBackground,
+    onBackground = LightOnBackground,
+    surface = LightSurface,
+    onSurface = LightOnSurface,
+    surfaceVariant = LightSurfaceVariant,
+    onSurfaceVariant = LightOnSurfaceVariant,
+    outline = LightOutline,
+    error = LightError,
+    onError = Color.White
 )
 
 @Composable
@@ -46,4 +54,3 @@ fun VinflowTheme(
         content = content
     )
 }
-

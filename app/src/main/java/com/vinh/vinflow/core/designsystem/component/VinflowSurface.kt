@@ -10,24 +10,26 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.vinh.vinflow.core.designsystem.theme.ChromeIndigo
-import com.vinh.vinflow.core.designsystem.theme.LightPeriwinkle
-import com.vinh.vinflow.core.designsystem.theme.PeriwinkleMetallic
+import androidx.compose.material3.MaterialTheme
 
+
+//Component sử dụng chung, tạo ra 1 surface container(khung nội dung)
+//với các cấu hình thiết lập cố định
 @Composable
-fun ChromePlate(
+fun VinflowSurface(
     modifier: Modifier = Modifier,
     padding: PaddingValues = PaddingValues(16.dp),
     content: @Composable () -> Unit
 ) {
     Box(
         modifier = modifier
-            .background(PeriwinkleMetallic, RoundedCornerShape(8.dp))
-            .border(BorderStroke(2.dp, LightPeriwinkle), RoundedCornerShape(8.dp))
-            .border(BorderStroke(1.dp, ChromeIndigo), RoundedCornerShape(8.dp))
+            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(8.dp))
+            .border(
+                BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)),
+                RoundedCornerShape(8.dp)
+            )
             .padding(padding)
     ) {
         content()
     }
 }
-

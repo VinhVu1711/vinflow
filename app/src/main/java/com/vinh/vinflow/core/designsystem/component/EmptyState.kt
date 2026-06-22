@@ -15,7 +15,7 @@ fun EmptyState(
     message: String,
     modifier: Modifier = Modifier
 ) {
-    ChromePlate(modifier = modifier) {
+    VinflowSurface(modifier = modifier) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(text = title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Text(text = message, style = MaterialTheme.typography.bodyMedium)
