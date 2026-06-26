@@ -1,5 +1,8 @@
 package com.vinh.vinflow.core.designsystem.component
 
+import android.os.SystemClock
+import android.util.Log
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -27,6 +30,7 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,6 +40,7 @@ import com.vinh.vinflow.core.navigation.VinflowDestination
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.foundation.shape.RoundedCornerShape
+import com.vinh.vinflow.BuildConfig
 
 @Composable
 fun VinflowScaffold(
@@ -81,6 +86,15 @@ fun VinflowTopBar(
     actions: @Composable () -> Unit = {},
     onBackClick: () -> Unit = {}
 ) {
+    LaunchedEffect(title) {
+        if (BuildConfig.DEBUG) {
+            Log.d(
+                VINFLOW_TOP_BAR_ANIMATION_TAG,
+                "titleTarget=$title, time=${SystemClock.elapsedRealtime()}"
+            )
+        }
+    }
+
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -128,17 +142,24 @@ fun VinflowTopBar(
                     maxLines = 1
                 )
             }
-            Text(
-                text = title,
-                color = MaterialTheme.colorScheme.onBackground,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1
-            )
+            AnimatedContent(
+                targetState = title,
+                label = "vinflow_top_bar_title"
+            ) { targetTitle ->
+                Text(
+                    text = targetTitle,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1
+                )
+            }
         }
         actions()
     }
 }
+
+private const val VINFLOW_TOP_BAR_ANIMATION_TAG = "VinflowTopBarAnimation"
 
 @Composable
 fun VinflowBottomBar(

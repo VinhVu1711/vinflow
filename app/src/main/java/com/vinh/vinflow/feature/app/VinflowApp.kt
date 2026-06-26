@@ -1,5 +1,14 @@
 package com.vinh.vinflow.feature.app
 
+import android.os.SystemClock
+import android.util.Log
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -13,6 +22,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.vinh.vinflow.BuildConfig
 import com.vinh.vinflow.core.designsystem.component.VinflowScaffold
 import com.vinh.vinflow.core.navigation.VinflowDestination
 import com.vinh.vinflow.feature.backup.ImportPreviewScreen
@@ -70,7 +80,43 @@ fun VinflowNavHost(
     NavHost(
         navController = navController,
         startDestination = VinflowDestination.Dashboard.route,
-        modifier = modifier
+        modifier = modifier,
+        enterTransition = {
+            logNavigationAnimation(
+                phase = "enter",
+                fromRoute = initialState.destination.route,
+                toRoute = targetState.destination.route,
+                durationMs = VINFLOW_ENTER_TRANSITION_MS
+            )
+            vinflowEnterTransition()
+        },
+        exitTransition = {
+            logNavigationAnimation(
+                phase = "exit",
+                fromRoute = initialState.destination.route,
+                toRoute = targetState.destination.route,
+                durationMs = VINFLOW_EXIT_TRANSITION_MS
+            )
+            vinflowExitTransition()
+        },
+        popEnterTransition = {
+            logNavigationAnimation(
+                phase = "pop_enter",
+                fromRoute = initialState.destination.route,
+                toRoute = targetState.destination.route,
+                durationMs = VINFLOW_ENTER_TRANSITION_MS
+            )
+            vinflowPopEnterTransition()
+        },
+        popExitTransition = {
+            logNavigationAnimation(
+                phase = "pop_exit",
+                fromRoute = initialState.destination.route,
+                toRoute = targetState.destination.route,
+                durationMs = VINFLOW_EXIT_TRANSITION_MS
+            )
+            vinflowPopExitTransition()
+        }
     ) {
         //Khi route là Dashboard thì render DashboardScreen
         composable(VinflowDestination.Dashboard.route) {
@@ -104,7 +150,10 @@ fun VinflowNavHost(
             )
         }
         composable(VinflowDestination.AddTransaction.route) {
-            TransactionFormScreen(isEdit = false)
+            TransactionFormScreen(
+                isEdit = false,
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
         composable(
             route = VinflowDestination.EditTransaction.route,
@@ -118,7 +167,8 @@ fun VinflowNavHost(
                 ?.getLong(VinflowDestination.EditTransaction.ARG_TRANSACTION_ID)
             TransactionFormScreen(
                 isEdit = true,
-                transactionId = transactionId
+                transactionId = transactionId,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
         composable(VinflowDestination.CategoryManagement.route) {
@@ -129,6 +179,44 @@ fun VinflowNavHost(
         }
     }
 }
+
+private fun vinflowEnterTransition(): EnterTransition {
+    return fadeIn(animationSpec = tween(VINFLOW_ENTER_TRANSITION_MS)) +
+        slideInHorizontally(animationSpec = tween(VINFLOW_ENTER_TRANSITION_MS)) { fullWidth -> fullWidth / 10 }
+}
+
+private fun vinflowExitTransition(): ExitTransition {
+    return fadeOut(animationSpec = tween(VINFLOW_EXIT_TRANSITION_MS)) +
+        slideOutHorizontally(animationSpec = tween(VINFLOW_EXIT_TRANSITION_MS)) { fullWidth -> -fullWidth / 18 }
+}
+
+private fun vinflowPopEnterTransition(): EnterTransition {
+    return fadeIn(animationSpec = tween(VINFLOW_ENTER_TRANSITION_MS)) +
+        slideInHorizontally(animationSpec = tween(VINFLOW_ENTER_TRANSITION_MS)) { fullWidth -> -fullWidth / 10 }
+}
+
+private fun vinflowPopExitTransition(): ExitTransition {
+    return fadeOut(animationSpec = tween(VINFLOW_EXIT_TRANSITION_MS)) +
+        slideOutHorizontally(animationSpec = tween(VINFLOW_EXIT_TRANSITION_MS)) { fullWidth -> fullWidth / 18 }
+}
+
+private fun logNavigationAnimation(
+    phase: String,
+    fromRoute: String?,
+    toRoute: String?,
+    durationMs: Int
+) {
+    if (BuildConfig.DEBUG) {
+        Log.d(
+            VINFLOW_NAV_ANIMATION_TAG,
+            "phase=$phase, from=$fromRoute, to=$toRoute, durationMs=$durationMs, time=${SystemClock.elapsedRealtime()}"
+        )
+    }
+}
+
+private const val VINFLOW_ENTER_TRANSITION_MS = 140
+private const val VINFLOW_EXIT_TRANSITION_MS = 90
+private const val VINFLOW_NAV_ANIMATION_TAG = "VinflowNavAnimation"
 
 // Kiểm tra màn hiện tại có thuộc bottom tab không
 // Nếu có trả về route tab đó nếu không trả về null
